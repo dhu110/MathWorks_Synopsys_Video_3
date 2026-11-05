@@ -6,14 +6,14 @@ This project uses closed-loop Simulink simulation to generate Interior Permanent
 
 The motor-drive model includes PWM switching effects and spatial harmonics. Its simulated phase currents can be used as excitations in Finite Element Analysis (FEA) tools to refine electromagnetic loss calculations at the corresponding operating points.
 
+## Operating points
 The complete sweep produces **390 operating points: 15 speeds x 26 torque levels**, with a **fixed current-profile sampling time of 2 μs (500 kHz)**. Each extracted cycle retains its original logged samples without current resampling. The number of samples varies with speed: **7,500 at 1,000 rpm** and **500 at 15,000 rpm** for the supplied four-pole-pair motor. A separate envelope dataset contains **15 operating points at 100% torque**. Sweep settings are applied through `Simulink.SimulationInput` objects, preserving the structure and saved file of `GenerateIPMSMCurrentProfile.slx`.
 
 Run the five MATLAB steps from this folder. The workflow uses
 `GenerateIPMSMCurrentProfile.slx` and `Model_Init.mat` in this folder.
 
 
-## Operating points
->>>>>>> 12a4cfbf89d87525946af933ce034c0b2b49cecb
+
 
 <img width="1669" height="1521" alt="image" src="https://github.com/user-attachments/assets/7d426307-3bbb-4a3c-bcfe-2f115439186d" />
 
