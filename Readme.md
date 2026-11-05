@@ -1,6 +1,7 @@
 # IPMSM current profiles with constant sampling time (Video 3 Artifacts)
 *Built using MATLAB R2026a, Copyright 2026 The MathWorks, Inc.*
 
+<img width="1669" height="1521" alt="image" src="https://github.com/user-attachments/assets/7d426307-3bbb-4a3c-bcfe-2f115439186d" />
 
 Run the five MATLAB steps from this folder. The workflow uses
 `GenerateIPMSMCurrentProfile.slx` and `Model_Init.mat` in this folder.
