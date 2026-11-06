@@ -2,15 +2,15 @@
 *Built using MATLAB R2026a, Copyright 2026 The MathWorks, Inc.*
 
 
-This project uses closed-loop Simulink simulation to generate Interior Permanent Magnet Synchronous Motor (IPMSM) phase-current profiles across a full speed-torque grid. The workflow creates simulation inputs, runs the sweep, extracts one electrical cycle per operating point, validates the resulting dataset, provides a GUI for waveform review, and extracts the full-torque envelope profiles for FEA loss-calculation test runs.
+This project uses closed-loop Simulink simulation to generate Interior Permanent Magnet Synchronous Motor (IPMSM) phase-current profiles across a full speed-torque grid. The workflow creates simulation inputs, runs the sweep, extracts one electrical cycle per operating point, validates the resulting dataset, and provides a GUI for waveform review.
 
 The motor-drive model includes PWM switching effects and spatial harmonics. Its simulated phase currents can be used as excitations in Finite Element Analysis (FEA) tools to refine electromagnetic loss calculations at the corresponding operating points.
 
 ## Operating points
 
-The complete sweep produces **148 operating points across 15 speeds**, using **absolute torque commands of 10, 25, then 50 N m increments below the torque envelope, followed by the exact envelope endpoint**. Each speed has 7–12 torque steps with the supplied initialization data. Current-profile sampling remains **fixed at 2 μs (500 kHz)**, and each extracted cycle retains its original logged samples without current resampling. The number of samples varies with speed: **7,500 at 1,000 rpm** and **500 at 15,000 rpm** for the supplied four-pole-pair motor. A separate envelope dataset contains **15 operating points at 100% achievable torque**. Sweep settings are applied through `Simulink.SimulationInput` objects, preserving the structure and saved file of `GenerateIPMSMCurrentProfile.slx`.
+The complete sweep produces **148 operating points across 15 speeds**, using **absolute torque commands of 10, 25, then 50 N m increments below the torque envelope, followed by the exact envelope endpoint**. Each speed has 7–12 torque steps with the supplied initialization data. Current-profile sampling remains **fixed at 2 μs (500 kHz)**, and each extracted cycle retains its original logged samples without current resampling. The number of samples varies with speed: **7,500 at 1,000 rpm** and **500 at 15,000 rpm** for the supplied four-pole-pair motor. The complete dataset includes one **100% achievable-torque endpoint at each of the 15 speeds**. Sweep settings are applied through `Simulink.SimulationInput` objects, preserving the structure and saved file of `GenerateIPMSMCurrentProfile.slx`.
 
-Run the five MATLAB steps from this folder. The workflow uses
+Run the four MATLAB steps from this folder. The workflow uses
 `GenerateIPMSMCurrentProfile.slx` and `Model_Init.mat` in this folder.
 
 
@@ -22,7 +22,7 @@ Run the five MATLAB steps from this folder. The workflow uses
 
 - MATLAB and Simulink, with Simscape and Simscape Electrical for the supplied motor-drive model. The project was built using R2026a.
 - Parallel Computing Toolbox is optional. When available, the runner uses a process pool, creating up to four workers if no pool is already open. Otherwise, simulations run serially.
-- Keep the model, `Model_Init.mat`, and the five workflow scripts together in this folder, and select it as the MATLAB Current Folder. Generated results remain under this folder.
+- Keep the model, `Model_Init.mat`, and the four workflow scripts together in this folder, and select it as the MATLAB Current Folder. Generated results remain under this folder.
 
 ## Project Files
 
@@ -34,7 +34,6 @@ Run the five MATLAB steps from this folder. The workflow uses
 | `step_02_Run_IPMSM_Current_Profile_Sweep.m` | Prompts to reuse compatible saved results or rerun the complete sweep, extracts native current cycles, combines results, and invokes validation. |
 | `step_03_Validate_IPMSM_Current_Profiles.m` | Validates the saved dataset and plots its operating points against the torque envelope. |
 | `step_04_IPMSM_Current_Profile_GUI.m` | Opens an interactive viewer with speed-specific absolute-torque sliders, derived torque percentages, and variable-length waveform plots. |
-| `step_05_Extract_Envelop_Points.m` | Extracts one 100% torque profile per speed and saves the 15-point envelope dataset for FEA loss-calculation test runs. |
 
 ## Sweep Definition
 
@@ -50,7 +49,6 @@ Run the five MATLAB steps from this folder. The workflow uses
 | Current-profile sampling time | Fixed at `2e-6` s: 2 μs, or 500 kHz. |
 | Solver step | Retains the initialized `Ts`; the supplied value is 1 μs. |
 | Extracted data per operating point | One complete phase-aligned electrical cycle, retaining consecutive native samples with the cycle endpoint excluded. |
-| Envelope subset | 15 operating points, one at 100% torque for each speed. |
 
 Speed remains constant throughout each simulation. Torque uses **zero-order hold**: each absolute torque command stays constant for two electrical cycles before stepping to the next level.
 
@@ -95,10 +93,9 @@ With this folder selected in MATLAB, run:
 ```matlab
 step_02_Run_IPMSM_Current_Profile_Sweep
 step_04_IPMSM_Current_Profile_GUI
-step_05_Extract_Envelop_Points
 ```
 
-Step 02 opens a Y/N dialog: choose Y to reuse compatible saved results or N to rerun all 15 speeds. Choose **N when replacing the earlier percentage-based sweep or legacy resampled results**. Choosing N automatically invokes Step 01 to create the inputs. Both choices combine the profiles and invoke Step 03 for validation. Step 04 opens the saved dataset for waveform review. Step 05 saves the full-torque envelope subset; opening the GUI is optional.
+Step 02 opens a Y/N dialog: choose Y to reuse compatible saved results or N to rerun all 15 speeds. Choose **N when replacing the earlier percentage-based sweep or legacy resampled results**. Choosing N automatically invokes Step 01 to create the inputs. Both choices combine the profiles and invoke Step 03 for validation. Step 04 opens the saved dataset for waveform review.
 
 To rerun the entire process without the Y/N dialog:
 
@@ -106,17 +103,15 @@ To rerun the entire process without the Y/N dialog:
 IPMSM_Sweep_ReuseChoice = "N";
 step_02_Run_IPMSM_Current_Profile_Sweep
 step_04_IPMSM_Current_Profile_GUI
-step_05_Extract_Envelop_Points
 ```
 
 `IPMSM_Sweep_ReuseChoice` accepts Y or N and is consumed by Step 02. Without this override, the dialog behavior is unchanged.
 
-For an existing dataset in the current format, validation, GUI plotting, and envelope extraction can be run independently:
+For an existing dataset in the current format, validation and GUI plotting can be run independently:
 
 ```matlab
 step_03_Validate_IPMSM_Current_Profiles
 step_04_IPMSM_Current_Profile_GUI
-step_05_Extract_Envelop_Points
 ```
 
 ## Detailed Workflow
@@ -210,42 +205,16 @@ Both plots use **Sample No. 1–N** on the x-axis and share their x-axis limits.
 
 The GUI reads the saved profiles directly and does not run simulations or interpolate between operating points. It checks the 11-field schema and 2 μs time spacing. An optional MAT-file path can be passed to `step_04_IPMSM_Current_Profile_GUI` to view another dataset with the same required format.
 
-### 5. Extract Envelope Operating Points for FEA Test Runs
-
-```matlab
-step_05_Extract_Envelop_Points
-```
-
-This script reads the saved `IPMSM_Current_Profiles.mat` and its configuration, requires the current absolute-torque sweep format, verifies the dataset checksum, and selects profiles whose torque command equals the envelope and whose derived torque percentage is 100 within numerical tolerance. It creates **`IPMSM_Envelope_Current_Profiles`**, a **15-by-1 structure array** sorted by speed from 1000 to 15000 rpm, and saves it in `IPMSM_Envelope_Current_Profiles.mat`.
-
-Extraction checks that there is exactly one full-torque operating point at each expected speed, that `TrqCmd` matches `TrqEnvelope` within numerical tolerance, and that all sampled signals have matching finite column vectors with native 2 μs time spacing.
-
-All 11 fields are copied from each selected source profile. Current values, sample counts, reference commands, rotor angles, and time vectors remain unchanged. Step 05 performs no simulation, resampling, or loss calculation.
-
-These 15 envelope operating points can be used for **FEA loss-calculation test runs**. For example:
-
-```matlab
-envelopeData = load("IPMSM_Envelope_Current_Profiles.mat", ...
-    "IPMSM_Envelope_Current_Profiles");
-profile = envelopeData.IPMSM_Envelope_Current_Profiles(1); % 1000 rpm, 100% torque
-Iabc = [profile.Ia, profile.Ib, profile.Ic];
-rotorAngle = profile.RotorAngle; % Relative mechanical radians
-time = profile.Time;            % Seconds, 2 us spacing
-```
-
-Run Step 05 after Step 02 has generated and validated the full dataset. Opening Step 04 is optional. Rerun Step 05 whenever the full dataset is regenerated to refresh the envelope subset.
-
 ## Saved Outputs
 
 | Output | Contents |
 | --- | --- |
 | `IPMSM_Current_Profiles.mat` | Only the combined `IPMSM_Current_Profiles` structure array: 148 operating points with the supplied initialization, saved with `-v7.3`. |
-| `IPMSM_Envelope_Current_Profiles.mat` | Only the 15 full-torque `IPMSM_Envelope_Current_Profiles`, saved with `-v7.3` for FEA loss-calculation test runs. |
 | `IPMSM_Sweep_Config.mat` | Absolute-torque sweep settings, per-speed torque/percentage/reference-current cell arrays, step counts, total operating-point count, format version 3, 2 μs sampling interval, nominal sample counts, and checksums. |
 | `IPMSM_Sweep_Results/Profiles_<speed>rpm.mat` | A completed speed run's variable number of `runProfiles`, plus its sweep configuration. |
 | `IPMSM_Current_Profiles_Validation.mat` | Validation status, operating-point counts, per-profile sample counts, sample-count range, and maximum sampling-interval and cycle-duration errors. |
 
-Each entry of `IPMSM_Current_Profiles` and `IPMSM_Envelope_Current_Profiles` contains exactly these fields, in this order:
+Each entry of `IPMSM_Current_Profiles` contains exactly these fields, in this order:
 
 | Field | Shape | Meaning |
 | --- | --- | --- |
@@ -265,7 +234,7 @@ Each entry of `IPMSM_Current_Profiles` and `IPMSM_Envelope_Current_Profiles` con
 
 `Id_ref` and `Iq_ref` describe the commanded operating point. They are calculated from the controller's lookup tables rather than logged controller transients or measured d/q feedback currents.
 
-Shared motor and sweep metadata, including pole pairs, electrical periods, Stop Times, nominal sample counts, and checksums, are stored in `IPMSM_Sweep_Config.mat` for validation and in the per-speed checkpoints for reuse. Loading either profile MAT file loads only its profile structure array. Absolute rotor position and absolute simulation timestamps are omitted from the compact profiles. A zero-based `RotorAngle` describes the extracted samples' relative mechanical angle; it does not indicate that every torque step or first retained sample occurs at physical mechanical zero.
+Shared motor and sweep metadata, including pole pairs, electrical periods, Stop Times, nominal sample counts, and checksums, are stored in `IPMSM_Sweep_Config.mat` for validation and in the per-speed checkpoints for reuse. Loading `IPMSM_Current_Profiles.mat` loads only its profile structure array. Absolute rotor position and absolute simulation timestamps are omitted from the compact profiles. A zero-based `RotorAngle` describes the extracted samples' relative mechanical angle; it does not indicate that every torque step or first retained sample occurs at physical mechanical zero.
 
 For example, access the 100% torque profile at 5000 rpm in the complete dataset with:
 
@@ -287,10 +256,10 @@ Run `step_02_Run_IPMSM_Current_Profile_Sweep` and choose:
 
 If Y is selected but checkpoints are missing, incomplete, inconsistent, or obsolete, the script reports an error and directs you to select N. It does not silently launch simulations. Both the previous percentage-based sweep and legacy 1,000-point resampled checkpoints are rejected. Closing the dialog cancels execution.
 
-Model-file or initialization-data changes invalidate checkpoint reuse through checksum checks. Choose N to generate new results after changing the model, initialization data, or cycle-selection logic. Rerunning the entire sweep may take a few minutes or longer, depending on the model and hardware. After regenerating the combined dataset, run Step 05 again to update the envelope profiles.
+Model-file or initialization-data changes invalidate checkpoint reuse through checksum checks. Choose N to generate new results after changing the model, initialization data, or cycle-selection logic. Rerunning the entire sweep may take a few minutes or longer, depending on the model and hardware.
 
 ## Configuration Changes
 
 The speed list, `InitialTorques = [10, 25]`, `TorqueIncrement = 50`, and fixed profile sampling interval are defined in `IPMSM_Sweep_Config` inside `step_01_Create_IPMSM_Simulation_Inputs.m`. Motor parameters, the torque envelope, the solver step `Ts`, and pole pairs come from `Model_Init.mat`; operating-point inputs and percentages are generated by the scripts. `SamplesPerCycle` stores the nominal period-to-sampling-interval ratio, which can be noninteger. There is no fixed output sample-count setting or common percentage-sweep axis.
 
-The supplied implementation enforces the documented 15 speeds, absolute-torque rule, and **2 μs profile sampling**. Step counts, total operating-point count, and Stop Times are derived from each speed's envelope. Changing the absolute-torque rule requires updating the settings in the input builder, the checkpoint requirements in the runner, and the independent grid reconstruction in Step 03. Changing speeds also requires updating Step 03 and the 15-speed expectation in Step 05. The builder and extractor use `CyclesPerStep` for timing; validation currently enforces two cycles per torque step. The GUI derives speed and torque selections and waveform lengths from the saved dataset, while the GUI and envelope extractor both require 2 μs time spacing.
+The supplied implementation enforces the documented 15 speeds, absolute-torque rule, and **2 μs profile sampling**. Step counts, total operating-point count, and Stop Times are derived from each speed's envelope. Changing the absolute-torque rule requires updating the settings in the input builder, the checkpoint requirements in the runner, and the independent grid reconstruction in Step 03. Changing speeds also requires updating Step 03. The builder and extractor use `CyclesPerStep` for timing; validation currently enforces two cycles per torque step. The GUI derives speed and torque selections and waveform lengths from the saved dataset and requires 2 μs time spacing.
