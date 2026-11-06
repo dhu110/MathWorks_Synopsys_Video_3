@@ -1,5 +1,5 @@
 function fig = step_04_IPMSM_Current_Profile_GUI(dataFile)
-% Browse saved operating points with speed and absolute-torque sliders.
+% Browse variable speed-specific absolute-torque grids with native 2 us samples.
 if nargin < 1
     dataFile = fullfile(fileparts(mfilename("fullpath")), "IPMSM_Current_Profiles.mat");
 end
@@ -37,6 +37,7 @@ selectedSpeed = speeds(speedIndex);
 availableIndices = find([profiles.Speed_rpm] == selectedSpeed);
 [availableTorques, torqueOrder] = sort([profiles(availableIndices).TrqCmd]);
 availableIndices = availableIndices(torqueOrder);
+assert(all(diff(availableTorques) > 0), "Torque commands at each speed must be distinct.");
 selectedIndex = availableIndices(end);
 
 fig = uifigure("Name", "IPMSM Current Profile Validation", ...
@@ -111,6 +112,7 @@ fig.Visible = "on";
             availableIndices = find([profiles.Speed_rpm] == selectedSpeed);
             [availableTorques, order] = sort([profiles(availableIndices).TrqCmd]);
             availableIndices = availableIndices(order);
+            assert(all(diff(availableTorques) > 0), "Torque commands at each speed must be distinct.");
             torqueSlider.Limits = [availableTorques(1), availableTorques(end)];
             updateTorqueTicks();
             selectTorque(requestedTorque, true);
@@ -154,11 +156,14 @@ fig.Visible = "on";
         title(currentAxes, sprintf("Phase Currents | %d samples | 2 us | Id ref %.2f A, Iq ref %.2f A", ...
             sampleCount, profile.Id_ref, profile.Iq_ref));
         speedLabel.Text = sprintf("Speed_rpm\n%d rpm", profile.Speed_rpm);
-        torqueLabel.Text = sprintf("Trq_cmd\n%.2f N m", profile.TrqCmd);
+        torqueLabel.Text = sprintf("Trq_cmd\n%.2f N m (%.1f%%)", ...
+            profile.TrqCmd, profile.TorquePercent);
         fig.UserData = struct("ProfileIndex", selectedIndex, ...
             "Speed_rpm", profile.Speed_rpm, "TrqCmd", profile.TrqCmd, ...
             "SampleCount", sampleCount, "ProfileSampleTime", 2e-6, ...
             "Id_ref", profile.Id_ref, "Iq_ref", profile.Iq_ref);
+        fig.UserData.TorquePercent = profile.TorquePercent;
+        fig.UserData.TorqueStepsAtSpeed = numel(availableTorques);
         drawnow limitrate;
     end
 end
